@@ -1,0 +1,399 @@
+/* =========================
+   STYLES GLOBAUX — LAGOS
+   ========================= */
+
+   html {
+    font-family: 'auto';
+    line-height: 1.15;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  body {
+    background-color: #ffffff;
+    font-family: 'auto';
+    color: #333;
+    margin: 0;
+    padding: 0;
+  }
+  body, html {
+    height: 100%;
+    overflow-x: hidden;
+}
+
+  
+
+  
+  /* =========================
+     TYPOGRAPHIE DE BASE
+     ========================= */
+  
+  h1, h2, h3, h4, h5, h6 {
+    color: #222;
+    font-weight: 400;
+    margin-bottom: 15px;
+  }
+  
+  p {
+    font-size: 16px;
+    color: #555;
+    line-height: 1.6;
+  }
+  
+  /* =========================
+     LIENS & BOUTONS
+     ========================= */
+  
+  a {
+    color: #007bff;
+    text-decoration: none;
+    transition: 0.3s ease-in-out;
+  }
+  a:hover {
+    color: #0056b3;
+    text-decoration: underline;
+  }
+  
+  .btn {
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 6px;
+    padding: 10px 15px;
+    transition: all 0.3s ease-in-out;
+  }
+  .btn-danger {
+    background-color: #dc3545;
+    border: none;
+  }
+  .btn-danger:hover {
+    background-color: #c82333;
+  }
+  
+  /* =========================
+     CARTES / TABLES
+     ========================= */
+  
+  .card {
+    /* border-radius: 10px; */
+    box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
+    border: none;
+    background-color: #fff;
+    margin-bottom: 20px;
+  }
+  .card-header {
+    background-color: #f8f9fa;
+    font-weight: bold;
+  }
+  
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .table th {
+    background-color: #f1f1f1;
+    color: #333;
+    font-weight: 400 !important;
+    text-align: center;
+    font-size: small;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .table td {
+    text-align: center;
+    border-bottom: 1px solid #00000021;
+  }
+  
+  /* =========================
+     COULEURS / UTILITAIRES
+     ========================= */
+  
+  /* Fond blanc générique sans bordure parasite */
+  .bg-white {
+    background-color: #fff !important;
+    border-right: none !important;
+  }
+  
+  /* Variante pour sidebar (si utilisée) */
+  .sidebar-bg {
+    background-color: #fff;
+    border-right: 1px solid #ddd;
+  }
+  
+  .bg-dark {
+    background-color: #000000 !important;
+  }
+  
+  .required {
+    color: red;
+  }
+  
+  .border-dashed {
+    border: 1px dashed #9eafc1;
+    background-color: #ededed;
+  }
+  
+ /* =========================
+   HEADER RAFFINÉ — LAGOS
+   ========================= */
+header {
+  background-color: #fff;
+  border-bottom: 1px solid #eee;
+  position: relative;
+  z-index: 1000;
+  transition: all 0.5s ease;
+  opacity: 0;
+  transform: translateY(-15px);
+  animation: fadeInHeader 0.8s forwards;
+}
+
+/* Bandeau promo (facultatif) */
+header .promo-bar {
+  background-color: #111;
+  color: #fff;
+  text-align: center;
+  font-size: 0.85rem;
+  padding: 0.35rem 0;
+  letter-spacing: 0.5px;
+}
+
+/* Navbar principale */
+/* header .navbar {
+  padding: 0.8rem 0;
+} */
+
+/* Logo */
+header .navbar-brand img {
+  max-height: 40px;
+  transition: transform 0.3s ease;
+}
+header .navbar-brand img:hover {
+  transform: scale(1.05);
+}
+
+/* Menu principal */
+header .navbar-nav {
+  flex-wrap: nowrap;
+}
+
+/* Nav-link */
+header .nav-link {
+  color: #222;
+  font-weight: 500;
+  position: relative;
+  padding: 0.5rem 0.75rem;
+  line-height: 1;
+  white-space: nowrap; /* empêche le retour à la ligne */
+  transition: color 0.3s ease;
+  overflow: hidden;
+  display: inline-block;
+}
+
+/* Soulignement animé glissant de droite à gauche */
+header .nav-link::after {
+  content: '';
+  position: absolute;
+  right: 0;             /* commence à la droite du mot */
+  bottom: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #111;
+  transform: scaleX(0);   /* invisible au départ */
+  transform-origin: right; /* origine droite → glisse vers la gauche */
+  transition: transform 0.4s ease;
+}
+
+header .nav-link:hover::after,
+header .nav-link.active::after {
+  transform: scaleX(1);   /* s'étend jusqu'à la fin du mot */
+}
+
+/* Couleurs au hover */
+header .nav-link:hover,
+header .nav-link.active {
+  color: #186dc3;
+}
+
+/* Icônes utilisateur & panier */
+header .bi {
+  font-size: 1.2rem;
+  color: #222;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+header .bi:hover {
+  color: #007bff;
+  transform: scale(1.15);
+}
+
+/* Badge du panier */
+header .badge {
+  font-size: 0.65rem;
+  font-weight: 500;
+  position: absolute;
+  top: 0;
+  right: 0;
+  transform: translate(50%, -50%);
+  border: 1px solid #fff;
+}
+
+/* Animation d'apparition lente */
+@keyframes fadeInHeader {
+  to {
+      opacity: 1;
+      transform: translateY(0);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 991px) {
+  header .nav-link {
+      padding: 0.5rem 1rem;
+      text-align: center;
+  }
+}
+
+
+
+/*********************/
+.top-bar {
+  background-color: #000000; /* Couleur de fond */
+  
+  overflow: hidden;
+  white-space: nowrap;
+  width: 100%;
+  position: relative;
+  border-bottom: 1px solid #ddd;
+  height: 30px;
+}
+
+.scroll-text span {
+  display: inline-block;
+  padding-left: 100%; /* Commence hors de l'écran à droite */
+  animation: scroll-left 15s linear infinite;
+  font-size: 0.9rem;
+  color: white;
+}
+
+@keyframes scroll-left {
+  0% {
+      transform: translateX(0%);
+  }
+  100% {
+      transform: translateX(-100%);
+  }
+}
+
+
+
+
+/******category******/
+.category-card {
+  height: 400px;
+  text-decoration: none;
+  position: relative;
+}
+.category-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: all 0.3s ease;
+}
+.category-card .overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0);
+  transition: background 0.3s ease;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 15px;
+}
+.category-card:hover .overlay {
+  background: rgba(0,0,0,0.5);
+}
+.category-name {
+  font-weight: 600;
+  font-size: 1.2rem;
+  text-align: center;
+}
+.row.justify-content-center > .col-12.col-md-5 + .col-12.col-md-5 {
+  margin-left: 2%; /* petit écart si nécessaire */
+}
+
+
+
+
+
+
+
+
+
+
+
+/********* cart-count *********/
+.cart-count {
+  position: absolute;
+  top: -5px;
+  right: -8px;
+  background: #111;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 50%;
+  padding: 0.2rem 0.45rem;
+  line-height: 1;
+  display: none;
+}
+
+
+
+/************modal--cart********/
+.color-circle {
+  display: inline-block;
+  margin-right: 5px;
+  margin-bottom: 5px;
+}
+
+
+
+/*****/
+.size-square {
+  width: 40px;
+  height: 40px;
+  line-height: 40px;
+  text-align: center;
+  border: 1px solid #ccc;
+  margin-right: 5px;
+  margin-bottom: 5px;
+  cursor: pointer;
+  user-select: none;
+  border-radius: 4px; /* Carré légèrement arrondi */
+  font-weight: 500;
+}
+
+.size-square.selected {
+  border: 2px solid black;
+}
+
+.size-square.out-of-stock {
+  opacity: 0.4;
+  position: relative;
+}
+
+.size-square.out-of-stock::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: red;
+  opacity: 0.5;
+  border-radius: 4px;
+}
+
+
