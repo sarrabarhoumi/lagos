@@ -7,17 +7,18 @@ if (session_status() === PHP_SESSION_NONE) {
 <!-- HEADER LAGOS -->
 <header id="lagosHeader" class="header shadow-sm">
 
-  <!-- Barre supérieure (promotion / info) -->
 <div class="top-bar">
-    <div class="scroll-text">
+    <marquee behavior="scroll" direction="left" scrollamount="13">
         <?php 
-        $sql = "SELECT message FROM top_bar_info WHERE statut='actif' ";
+        $sql = "SELECT message FROM top_bar_info WHERE statut='actif'";
         $result = mysqli_query($con, $sql);
-        $topBarMessage = mysqli_fetch_assoc($result)['message'] ?? '';
+        while($topBarMessage = mysqli_fetch_assoc($result)){
+            echo htmlspecialchars($topBarMessage['message']) . str_repeat('&nbsp;', 20); 
+        }
         ?>
-        <span><?= htmlspecialchars($topBarMessage) ?></span>
-    </div>
+    </marquee>
 </div>
+
 
 
   <!-- Navigation principale -->
