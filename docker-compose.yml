@@ -1,0 +1,32 @@
+
+
+services:
+  web:
+    build: .
+    container_name: mon-projet-web
+    ports:
+      - "8080:80"   # 8080 sur ton PC → 80 dans le conteneur
+    volumes:
+      - ./src:/var/www/html   # pour synchroniser ton code local avec le conteneur
+    networks:
+      - monreseau
+
+  db:
+    image: mysql:8.0
+    container_name: lagos
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 
+      MYSQL_DATABASE: lagos
+      MYSQL_USER: root
+      MYSQL_PASSWORD: 
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - monreseau
+
+networks:
+  monreseau:
+
+volumes:
+  db_data:

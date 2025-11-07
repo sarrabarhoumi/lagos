@@ -28,8 +28,8 @@
             min-height: 100vh;
             background-color: #1a1a1a;
             color: #fff;
-            position: fixed;
-            width: 220px;
+            /*position: fixed;
+            width: 220px;*/
             transition: all 0.3s ease;
         }
 
@@ -50,7 +50,7 @@
 
         /* Main content */
         .content {
-            margin-left: 220px;
+            /* margin-left: 220px; */
             padding: 30px 20px;
         }
 
@@ -168,6 +168,22 @@
                         <i class="bi bi-shield-lock-fill me-2 fs-5"></i> <span>Rôles</span>
                     </a>
                 </li>
+
+                <!-- top-bar -->
+                <li class="nav-item mb-2">
+                    <a class="nav-link d-flex align-items-center px-3 py-2 rounded" data-bs-toggle="pill" href="#top-bar">
+                        <i class="bi bi-chat-dots-fill me-2 fs-5"></i>
+                        <span>Messages</span>
+                    </a>
+                </li>
+                <!-- top-bar -->
+                <li class="nav-item mb-2">
+                    <a class="nav-link d-flex align-items-center px-3 py-2 rounded" data-bs-toggle="pill" href="#contact-message">
+                        <i class="bi bi-envelope-paper-fill me-2 fs-5"></i>
+                        <span>Contact Messages</span>
+                    </a>
+                </li>
+
 
 
             </ul>
@@ -424,6 +440,51 @@
                     </div>
                 </div>
 
+
+                <!-- top-bar -->
+                <div class="tab-pane fade" id="top-bar">
+                    <div class="card-table">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5>Message top bar</h5>
+                            <button class="btn btn-dark" onclick="newTopBar()">+ Ajouter</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="myTableTopBar" class="table table-hover table-striped dataTable w-100">
+                                <thead>
+                                    <tr>
+                                        <th>message</th>
+                                        <th>statut</th>
+                                        <th>action</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- contact-message -->
+                <div class="tab-pane fade" id="contact-message">
+                    <div class="card-table">
+
+                        <div class="table-responsive">
+                            <table id="myTableContactMessage" class="table table-hover table-striped dataTable w-100">
+                                <thead>
+                                    <tr>
+                                        <th>Message</th>
+                                        <th>Email</th>
+                                        <th>Nom</th>
+                                        <th>Numéro de téléphone</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -436,6 +497,7 @@
     <script src="js/produit.js"></script>
     <script src="js/categorie.js"></script>
     <script src="js/user.js"></script>
+    <script src="js/app.js"></script>
 
 </body>
 

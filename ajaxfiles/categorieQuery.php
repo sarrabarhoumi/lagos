@@ -189,7 +189,16 @@ if (isset($_POST['ajouterCategorie'])) {
     }
 }
 
+if(isset($_POST['supprimerCategorie'])){
 
+    $sql_delete=mysqli_query($con,"DELETE FROM categories WHERE id='".$_POST['id']."'");
+    if ($sql_delete) {
+        echo json_encode(['status' => 'success', 'message' => 'categorie supprimer avec success']);
+    } else {
+        echo json_encode(['status' => 'error', 'message' => "Erreur lors de la supprission.", 'error' => mysqli_error($con)]);
+    }
+
+}
 
 
 ?>

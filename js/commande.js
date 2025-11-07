@@ -102,6 +102,7 @@ $(document).on('submit', '#ValiderCommande', function (event) {
                         $('#ValiderCommandeModal').modal('hide');
                         $('.modal-backdrop').remove();
                     });
+                    
                 } else {
                     Swal.fire({
                         icon: 'error',

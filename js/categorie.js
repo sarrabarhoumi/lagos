@@ -78,6 +78,7 @@ $(document).on('submit', '#AjouterCategorie', function (event) {
                     $('#ajouterCategorieModal').modal('hide');
                     $('.modal-backdrop').remove();
                 });
+                $('#myTableCategorie').DataTable().ajax.reload(null, false);
             } else {
 
                 Swal.fire({
@@ -93,3 +94,37 @@ $(document).on('submit', '#AjouterCategorie', function (event) {
         }
     });
 });
+
+function supprimerCategorie (id){
+     $.ajax({
+        url: 'ajaxfiles/categorieQuery.php',
+        type: 'POST',
+        dataType: 'json', 
+        data: {
+            supprimerCategorie: true,
+            id: id
+        },
+        success: function (data) {
+            if (data.status === 'success') {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'categorie supprimé',
+                    text: data.message,
+                    confirmButtonText: 'OK'
+                });
+                $('#myTableCategorie').DataTable().ajax.reload(null, false);
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: data.message,
+                    confirmButtonText: 'Réessayer'
+                });
+            }
+        },
+        error: function (xhr, status, error) {
+            console.error("Erreur AJAX:", error);
+            console.log("Réponse brute :", xhr.responseText);
+        }
+    });
+}

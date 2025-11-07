@@ -139,6 +139,7 @@ function ajouter_produit() {
         success: function (data) {
             $('#update').html(data);
             $('#ajouterProduitModal').modal('show');
+            
         },
         error: function (xhr, status, error) {
             console.error("Erreur AJAX:", error);
@@ -206,6 +207,7 @@ $(document).on('submit', '#AjouterProduit', function (event) {
                     $('#preview').html('');
                 }
             });
+            $('#myTableProducts').DataTable().ajax.reload(null, false);
         },
         error: function (xhr, status, error) {
             console.error('Erreur AJAX:', error);
@@ -278,7 +280,7 @@ $(document).on('click', "#add_details_product", function () {
 });
 
 function openAddCartModal(product) {
-    // ✅ Prix
+    
     var prix = parseFloat(product.prix) || 0;
 
     // 🖼️ Image

@@ -14,7 +14,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 
     <!-- SweetAlert2 -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"> -->
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 
     <!-- Custom CSS -->
     <link rel="stylesheet" href="css/style.css">
@@ -62,6 +63,11 @@
         .info-wrap a:hover {
             text-decoration: underline;
         }
+        .toastify {
+  z-index: 999999 !important;
+  opacity: 1 !important;
+}
+
     </style>
 </head>
 
@@ -127,36 +133,11 @@
 <!-- JS Libraries -->
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> -->
+<!-- Toastify JS -->
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
-<script>
-    // Formulaire de contact
-    $('#contactForm').on('submit', function(e){
-        e.preventDefault();
-        const name = $('#name').val().trim();
-        const email = $('#email').val().trim();
-        const phone = $('#phone').val().trim();
-        const message = $('#message').val().trim();
-
-        if(!name || !email || !phone || !message){
-            Swal.fire('Erreur','Veuillez remplir tous les champs','error');
-            return;
-        }
-
-        $.ajax({
-            url: 'send_contact.php',
-            method: 'POST',
-            data: {name,email,phone,message},
-            success: function(response){
-                Swal.fire('Message envoyé','Merci pour votre message !','success');
-                $('#contactForm')[0].reset();
-            },
-            error: function(){
-                Swal.fire('Erreur','Une erreur est survenue.','error');
-            }
-        });
-    });
-</script>
+<script src="js/app.js"></script>
 
 </body>
 </html>

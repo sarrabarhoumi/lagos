@@ -95,6 +95,7 @@ $(document).on('submit', '#AddRole', function (event) {
                     timerProgressBar: true,
                     
                 });
+                $('#myTableRole').DataTable().ajax.reload(null, false);
             } else if (data.status === 'error') {
                 Swal.fire({
                     icon: 'error',
@@ -172,6 +173,7 @@ $(document).on('submit', '#AddUser', function (event) {
                         }
                     }
                 });
+                $('#myTableUsers').DataTable().ajax.reload(null, false);
             } else if (data.status === 'error') {
                 Swal.fire({
                     icon: 'error',
