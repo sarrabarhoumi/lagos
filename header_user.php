@@ -5,6 +5,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 ?>
 <!-- HEADER LAGOS -->
+ 
 <header id="lagosHeader" class="header shadow-sm">
 
 <div class="top-bar">
