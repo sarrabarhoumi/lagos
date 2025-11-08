@@ -15,16 +15,17 @@ if (file_exists($envFile)) {
 }
 
 
-$host = getenv('DB_HOST') ?: 'localhost';
-$user = getenv('DB_USER') ?: 'root';
-$password = getenv('DB_PASS') ?: '';
+$host = getenv('DB_HOST') ?: 'db';
+$user = getenv('DB_USER') ?: 'lagos';
+$password = getenv('DB_PASS') ?: 'W3a9ClHrgC[krsrd';
 $dbname = getenv('DB_NAME') ?: 'lagos';
 
 $con = mysqli_connect($host, $user, $password, $dbname);
 
 // Vérifier la connexion
+
 if (!$con) {
-    die("❌ Échec de la connexion à la base de données : " . mysqli_connect_error());
+    die("❌ Erreur MySQL : " . mysqli_connect_error());
 }
 
 mysqli_set_charset($con, "utf8mb4");

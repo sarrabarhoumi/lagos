@@ -3,23 +3,23 @@
 services:
   web:
     build: .
-    container_name: mon-projet-web
+    container_name: lagos_app
     ports:
       - "8080:80"   # 8080 sur ton PC → 80 dans le conteneur
     volumes:
-      - ./src:/var/www/html   # pour synchroniser ton code local avec le conteneur
+      - ./:/var/www/html   # pour synchroniser ton code local avec le conteneur
     networks:
       - monreseau
 
   db:
     image: mysql:8.0
-    container_name: lagos
+    container_name: lagos_db
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: 
+      MYSQL_ROOT_PASSWORD: root123
       MYSQL_DATABASE: lagos
-      MYSQL_USER: root
-      MYSQL_PASSWORD: 
+      MYSQL_USER: lagos
+      MYSQL_PASSWORD: W3a9ClHrgC[krsrd
     volumes:
       - db_data:/var/lib/mysql
     networks:
