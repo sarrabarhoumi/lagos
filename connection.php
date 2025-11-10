@@ -15,6 +15,7 @@ if (file_exists($envFile)) {
 }
 
 
+
 $host = getenv('DB_HOST') ?: 'db';
 $user = getenv('DB_USER') ?: 'lagos';
 $password = getenv('DB_PASS') ?: 'W3a9ClHrgC[krsrd';
