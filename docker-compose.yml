@@ -1,13 +1,11 @@
-
-
 services:
   web:
     build: .
     container_name: lagos_app
     ports:
-      - "8080:80"   # 8080 sur ton PC → 80 dans le conteneur
+      - "8080:80"
     volumes:
-      - ./:/var/www/html   # pour synchroniser ton code local avec le conteneur
+      - ./:/var/www/html
     networks:
       - monreseau
 
@@ -25,8 +23,19 @@ services:
     networks:
       - monreseau
 
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    ports:
+      - "8081:8080"   # 8081 sur ton PC → 8080 dans le conteneur Jenkins
+    volumes:
+      - jenkins_home:/var/jenkins_home
+    networks:
+      - monreseau
+
 networks:
   monreseau:
 
 volumes:
   db_data:
+  jenkins_home:
