@@ -10,11 +10,12 @@ pipeline {
         stage('Checkout') {
             steps {
                 echo "📥 Récupération du code depuis GitHub..."
+                deleteDir()
                 checkout([$class: 'GitSCM',
                     branches: [[name: 'main']],
                     userRemoteConfigs: [[
                         url: 'git@github.com:sarrabarhoumi/lagos.git',
-                        credentialsId: 'cda24bba-2b25-4f42-ba3d-0db436c55b7b'
+                        credentialsId: 'cda24bba-2b25-4f42-0db436c55b7b'
                     ]]
                 ])
             }
