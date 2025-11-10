@@ -21,6 +21,7 @@ pipeline {
             }
         }
 
+
         stage('Build') {
             steps {
                 echo "🏗️ Construction de l'image Docker..."
