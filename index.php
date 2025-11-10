@@ -1,4 +1,17 @@
-<?php include 'connection.php'; ?>
+<?php include 'connection.php'; 
+
+
+if (session_status() === PHP_SESSION_NONE) {
+  session_start();
+}
+
+ini_set('log_errors', 1);
+ini_set('error_log', '/var/www/html/php_errors.log');
+error_reporting(E_ALL);
+
+
+?>
+
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -172,8 +185,7 @@
 </head>
 
 <body>
-
-  <?php include 'header_user.php'; ?>
+<?php include 'header_user.php'; ?>
 
   <!-- SECTION HERO -->
   <section class="hero">
