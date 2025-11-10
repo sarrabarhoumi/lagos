@@ -7,10 +7,23 @@ pipeline {
     }
 
     stages {
+        stage('Checkout') {
+            steps {
+                echo "📥 Récupération du code depuis GitHub..."
+                checkout([$class: 'GitSCM',
+                    branches: [[name: 'main']],
+                    userRemoteConfigs: [[
+                        url: 'git@github.com:sarrabarhoumi/lagos.git',
+                        credentialsId: 'cda24bba-2b25-4f42-ba3d-0db436c55b7b'
+                    ]]
+                ])
+            }
+        }
+
         stage('Build') {
             steps {
                 echo "🏗️ Construction de l'image Docker..."
-                sh 'docker build -t $IMAGE_NAME:latest .'
+                sh "docker build -t $DOCKER_REGISTRY/$DOCKER_IMAGE:latest ."
             }
         }
 
@@ -18,7 +31,7 @@ pipeline {
             steps {
                 echo "🔍 Scan de sécurité avec Trivy..."
                 sh '''
-                trivy image --exit-code 1 --severity CRITICAL,HIGH $IMAGE_NAME:latest || echo "Scan terminé avec alertes"
+                trivy image --exit-code 1 --severity CRITICAL,HIGH $DOCKER_REGISTRY/$DOCKER_IMAGE:latest || echo "Scan terminé avec alertes"
                 '''
             }
         }
@@ -26,10 +39,12 @@ pipeline {
         stage('Push vers Docker Hub') {
             steps {
                 echo "☁️ Poussée de l'image sur Docker Hub..."
-                sh '''
-                echo "$DOCKER_HUB_CREDENTIALS_PSW" | docker login -u "$DOCKER_HUB_CREDENTIALS_USR" --password-stdin
-                docker push $IMAGE_NAME:latest
-                '''
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh '''
+                    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                    docker push $DOCKER_REGISTRY/$DOCKER_IMAGE:latest
+                    '''
+                }
             }
         }
     }
