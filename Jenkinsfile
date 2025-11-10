@@ -1,6 +1,7 @@
 pipeline {
     agent any
 
+
     stages {
         stage('Cloner le repo') {
             steps {
