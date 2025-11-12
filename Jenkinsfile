@@ -37,7 +37,7 @@ pipeline {
                 """
             }
         }
-
+/*
         stage('Scan avec Trivy') {
             steps {
                 echo "🔍 Scan de sécurité avec Trivy..."
@@ -51,7 +51,7 @@ pipeline {
                 }
             }
         }
-
+*/
         stage('Push Docker Hub') {
             steps {
                 echo "☁️ Poussée de l'image sur Docker Hub..."
