@@ -4,12 +4,12 @@ pipeline {
     environment {
         DOCKER_IMAGE      = 'lagos_app'
         DOCKER_REGISTRY   = 'sarra63578'
-        DOCKER_CREDENTIALS = 'dockerhub-credentials'  // ton PAT Docker Hub
+        DOCKER_CREDENTIALS = 'dockerhub-credentials'  // ton PAT Docker Hub avec scope write ou read & write
         GIT_CREDENTIALS    = '32f29e88-3a7a-4d61-8115-d0d581a27f95' // SSH GitHub
     }
 
     triggers {
-        pollSCM('H/5 * * * *') // Vérifie le repo toutes les 5 minutes
+        pollSCM('H/5 * * * *')
     }
 
     stages {
@@ -32,8 +32,8 @@ pipeline {
             steps {
                 echo "🏗️ Construction de l'image Docker..."
                 sh """
-                    docker rmi -f $DOCKER_REGISTRY/$DOCKER_IMAGE:latest || true
-                    docker build -t $DOCKER_REGISTRY/$DOCKER_IMAGE:latest .
+                    docker rmi -f ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:latest || true
+                    docker build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:latest .
                 """
             }
         }
@@ -44,7 +44,7 @@ pipeline {
                 script {
                     def trivyExists = sh(script: "command -v trivy || true", returnStdout: true).trim()
                     if (trivyExists) {
-                        sh "trivy image --exit-code 1 --severity CRITICAL,HIGH $DOCKER_REGISTRY/$DOCKER_IMAGE:latest || echo 'Scan terminé avec alertes'"
+                        sh "trivy image --exit-code 1 --severity CRITICAL,HIGH ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:latest || echo 'Scan terminé avec alertes'"
                     } else {
                         echo "⚠️ Trivy n'est pas installé, scan ignoré"
                     }
@@ -60,17 +60,20 @@ pipeline {
                     usernameVariable: 'DOCKER_USER', 
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
-                    sh """
+                    sh '''
+                        set +x
                         echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                        docker push $DOCKER_REGISTRY/$DOCKER_IMAGE:latest
-                        docker logout
-                    """
+                        docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:latest
+                    '''
                 }
             }
         }
     }
 
     post {
+        always {
+            sh "docker logout || true"
+        }
         success {
             echo "✅ Pipeline terminé avec succès !"
         }
