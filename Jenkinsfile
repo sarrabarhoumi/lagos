@@ -4,7 +4,7 @@ pipeline {
     environment {
         DOCKER_IMAGE      = 'lagos_app'
         DOCKER_REGISTRY   = 'sarra63578'
-        DOCKER_CREDENTIALS = 'dockerhub-credentials'  // ton PAT Docker Hub avec scope write ou read & write
+        DOCKER_CREDENTIALS = 'dockerhub-credentials'  //  PAT Docker Hub 
         GIT_CREDENTIALS    = '32f29e88-3a7a-4d61-8115-d0d581a27f95' // SSH GitHub
     }
 

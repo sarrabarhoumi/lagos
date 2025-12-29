@@ -1,567 +1,694 @@
+// ==============================
+// PANIER.JS (UNIFIÉ DB)
+// connecté => user_id
+// passager => guest_token (session)
+// ==============================
+
 $(document).ready(function () {
-    $('#myTableProducts').DataTable({
-        "processing": true,
-        "serverSide": true,
-        "ajax": {
-            "url": "ajaxfiles/productQuery.php",
-            "type": "POST",
-            "data": { 'getAllProduct': true },
-        },
-        "columns": [
-            { "data": 0 },
-            { "data": 1 },
-            { "data": 2 },
-            { "data": 3 },
-            { "data": 4 },
-            { "data": 5 },
-            { "data": 6 },
-            { "data": 7 },
-            { "data": 8 }
-        ],
-
+  $('#myTableProducts').DataTable({
+      processing: true,
+      serverSide: true,
+      ajax: {
+        url: "ajaxfiles/productQuery.php",
+        type: "POST",
+        data: function(d){
+          d.getAllProduct = true;
+        }
+      },
+      columnDefs: [
+        { targets:[0,3,5,8], orderable:false },
+        { targets:[0,3,5,8], searchable:false }
+      ]
     });
 
+  // -----------------------------------------
+  // 1) DATATABLE PANIER (connecté + passager)
+  // -----------------------------------------
+  if ($('#myTablePanier').length) {
+    window.cartTable = $('#myTablePanier').DataTable({
+      processing: true,
+      serverSide: true,
+      ajax: {
+        url: "ajaxfiles/cartQuery.php",
+        type: "POST",
+        data: function (d) {
+          d.getPanier = true;
+          d.csrf_token = window.CSRF_TOKEN || '';
+        }
+      },
+      columns: [
+        { data: 0 }, // produit
+        { data: 1 }, // prix
+        { data: 2 }, // qty controls
+        { data: 3 }, // total
+        { data: 4 }  // delete
+      ],
+      searching: false,
+      ordering: false,
+      lengthChange: false,
+      language: {
+        emptyTable: "Aucune donnée disponible",
+        info: "Affichage de _START_ à _END_ sur _TOTAL_ entrées",
+        infoEmpty: "Affichage de 0 à 0 sur 0 entrées",
+        infoFiltered: "(filtré à partir de _MAX_ entrées au total)",
+        loadingRecords: "Chargement...",
+        processing: "Traitement...",
+        zeroRecords: "Aucun enregistrement correspondant trouvé",
+        paginate: {
+          first: "Premier",
+          last: "Dernier",
+          next: "Suivant",
+          previous: "Précédent"
+        }
+      },
+      drawCallback: function () {
+        refreshCartSummary(); // update totals after each draw
+        loadCartCount();      // update badge
+      }
+    });
+  }
 
-
-    const userId = window.userId || null; // Passée depuis PHP si connecté
-    let cartGuest = JSON.parse(localStorage.getItem('cart')) || [];
-
-    if (userId) {
-        // Utilisateur connecté → DataTable côté serveur
-        $('#myTablePanier').DataTable({
-            processing: true,
-            serverSide: true,
-            ajax: {
-                url: "ajaxfiles/productQuery.php",
-                type: "POST",
-                data: { getPanier: true }
-            },
-            columns: [
-                { data: 0 },
-                { data: 1 },
-                { data: 2 },
-                { data: 3 },
-                { data: 4 }
-            ],
-            searching: false,
-            ordering: false,
-            lengthChange: false,
-            language: {
-                emptyTable: "Aucune donnée disponible",
-                info: "Affichage de _START_ à _END_ sur _TOTAL_ entrées",
-                infoEmpty: "Affichage de 0 à 0 sur 0 entrées",
-                infoFiltered: "(filtré à partir de _MAX_ entrées au total)",
-                loadingRecords: "Chargement...",
-                processing: "Traitement...",
-                zeroRecords: "Aucun enregistrement correspondant trouvé",
-                paginate: {
-                    first: "Premier",
-                    last: "Dernier",
-                    next: "Suivant",
-                    previous: "Précédent"
-                }
-            }
-        });
-    } else {
-        // Client passager → récupérer les infos complètes depuis la BDD
-        $.post('ajaxfiles/cartQuery.php', { cart: cartGuest }, function (res) {
-            if (res.status === 'success') {
-                let dataGuest = res.cart.map(item => {
-                    let total = (item.quantite * item.prix).toFixed(3) + ' DT';
-                    let colors = item.couleurs.map(c => `<span class="badge bg-secondary me-1">${c}</span>`).join('');
-                    let sizes = item.tailles.map(s => `<span class="badge bg-info me-1">${s}</span>`).join('');
-
-                    return [
-                        `<div class="d-flex align-items-center">
-                        <img src="${item.image || 'placeholder.jpg'}" style="width:70px;height:70px;object-fit:cover" class="rounded border" />
-                        <h5 class="mb-0 ms-3">${item.nom}<br>${colors}<br>${sizes}</h5>
-                    </div>`,
-                        item.prix + ' DT',
-                        `<div class="d-flex justify-content-center align-items-center">
-                        <button class="btn btn-sm btn-outline-dark me-2" onclick="decrementQuantityGuest(${item.id})">
-                            <i class="bi bi-dash-lg"></i>
-                        </button>
-                        <span id="quantite-guest-${item.id}">${item.quantite}</span>
-                        <button class="btn btn-sm btn-outline-dark ms-2" onclick="incrementQuantityGuest(${item.id})">
-                            <i class="bi bi-plus-lg"></i>
-                        </button>
-                    </div>`,
-                        total,
-                        `<button class="btn text-danger" onclick="removeFromCartGuest(${item.id})">
-                        <i class="bi bi-trash3-fill"></i>
-                    </button>`
-                    ];
-                });
-
-                $('#myTablePanier').DataTable({
-                    data: dataGuest,
-                    columns: [
-                        { title: "Produit" },
-                        { title: "Prix" },
-                        { title: "Quantité" },
-                        { title: "Total" },
-                        { title: "Supprimer" }
-                    ],
-                    searching: false,
-                    ordering: false,
-                    lengthChange: false,
-                    language: {
-                        emptyTable: "Aucune donnée disponible",
-                        info: "Affichage de _START_ à _END_ sur _TOTAL_ entrées",
-                        infoEmpty: "Affichage de 0 à 0 sur 0 entrées",
-                        infoFiltered: "(filtré à partir de _MAX_ entrées au total)",
-                        loadingRecords: "Chargement...",
-                        processing: "Traitement...",
-                        zeroRecords: "Aucun enregistrement correspondant trouvé",
-                        paginate: {
-                            first: "Premier",
-                            last: "Dernier",
-                            next: "Suivant",
-                            previous: "Précédent"
-                        }
-                    }
-                });
-            }
-        }, 'json');
-    }
-
-
+  // charger badge au démarrage
+  loadCartCount();
+  refreshCartSummary();
 });
 
 
-function ajouter_produit() {
-    $.ajax({
-        url: 'ajaxfiles/productQuery.php',
-        type: 'POST',
-        data: {
-            ajouterModalProduit: true
-        },
-        success: function (data) {
-            $('#update').html(data);
-            $('#ajouterProduitModal').modal('show');
-            
-        },
-        error: function (xhr, status, error) {
-            console.error("Erreur AJAX:", error);
-        }
-    });
+// ======================================================
+// 2) BADGE COUNT (connecté + passager) depuis DB
+// ======================================================
+function updateCartUI(count) {
+  const badge = document.querySelector('.cart-count');
+  if (!badge) return;
+
+  const c = parseInt(count || 0, 10);
+  badge.textContent = c;
+  badge.style.display = c > 0 ? 'inline-block' : 'none';
 }
 
-function modifierProduit(id) {
-    $.ajax({
-        url: 'ajaxfiles/productQuery.php',
-        type: 'POST',
-        data: {
-            modifierModalProduit: true,
-            id: id
-        },
-        success: function (data) {
-            $('#update').html(data);
-            $('#modifierProduitModal').modal('show');
-        },
-        error: function (xhr, status, error) {
-            console.error("Erreur AJAX:", error);
-        }
-    });
-}
-$(document).on('submit', '#AjouterProduit', function (event) {
-    event.preventDefault();
-
-    var formData = new FormData(this);
-    var productDetails = [];
-
-    // Collecte des détails
-    $('[id^=detail_]').each(function (i, item) {
-        var couleur = $(`#couleur_produit_${i}`).val();
-        var taille = $(`#taille_produit_${i}`).val();
-        var quantite = $(`#quantite_produit_${i}`).val();
-
-        productDetails.push({
-            couleur: couleur,
-            taille: taille,
-            quantite: quantite
-        });
-    });
-
-    formData.append('details_produit', JSON.stringify(productDetails));
-    formData.append('ajouterProduit', true);
-
-    $.ajax({
-        url: 'ajaxfiles/productQuery.php',
-        type: 'POST',
-        data: formData,
-        processData: false,
-        contentType: false,
-        dataType: 'JSON',
-        success: function (data) {
-            Swal.fire({
-                icon: data.status === 'success' ? 'success' : 'error',
-                title: data.status === 'success' ? 'Produit ajouté ✅' : 'Erreur ❌',
-                text: data.message,
-                confirmButtonText: 'OK'
-            }).then(() => {
-                if (data.status === 'success') {
-                    $('#ajouterProduitModal').modal('hide');
-                    $('.modal-backdrop').remove();
-                    $('#AjouterProduit')[0].reset();
-                    $('#preview').html('');
-                }
-            });
-            $('#myTableProducts').DataTable().ajax.reload(null, false);
-        },
-        error: function (xhr, status, error) {
-            console.error('Erreur AJAX:', error);
-            Swal.fire('Erreur serveur', 'Impossible de contacter le serveur.', 'error');
-        }
-    });
-});
-
-
-let selectedFiles = [];
-
-
-$(document).on('change', '#image_produit', function () {
-    let files = this.files;
-
-
-    if (files.length > 0) {
-        $.each(files, function (index, file) {
-
-            selectedFiles.push(file);
-
-            let reader = new FileReader();
-            reader.onload = function (e) {
-                let imgDiv = `
-                    <div class="image-container position-relative m-2">
-                        <img src="${e.target.result}" class="img-thumbnail" width="100">
-                        <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 remove-img" data-index="${selectedFiles.length - 1}">✖</button>
-                    </div>
-                `;
-                $('#preview').append(imgDiv);
-            };
-            reader.readAsDataURL(file);
-        });
+function loadCartCount() {
+  $.get('ajaxfiles/cartQuery.php', { getCartCount: true, csrf_token: window.CSRF_TOKEN || '' }, function (res) {
+    if (res && res.status === 'success') {
+      updateCartUI(res.cart_count);
     }
-});
+  }, 'json');
+}
 
-$(document).on('click', '.remove-img', function () {
 
-    let index = $(this).data('index');
-    selectedFiles.splice(index, 1);
+// ======================================================
+// 3) SUMMARY (sous-total / total) depuis DB
+// ======================================================
+function refreshCartSummary() {
+  if (!$('#subtotal').length || !$('#total-general').length) return;
 
-    $(this).parent().remove();
-    console.log(selectedFiles);
-});
+  $.get('ajaxfiles/cartQuery.php', { getCartSummary: true, csrf_token: window.CSRF_TOKEN || '' }, function (res) {
+    if (res && res.status === 'success') {
+      $('#subtotal').text(parseFloat(res.subtotal).toFixed(3) + " DT");
+      $('#total-general').text(parseFloat(res.total).toFixed(3) + " DT");
+    }
+  }, 'json');
+}
 
-$(document).on('click', "#add_details_product", function () {
-    let detailsCount = $('#details_produit .d-flex').length;
-    console.log('clicked');
-    let newDetails = `
-            <div id="detail_${detailsCount}" class="d-flex">
-                <div class="col-4">
-                    <label class="label" for="couleur_produit_${detailsCount}">Couleurs: <span class="required">*</span></label>
-                    <input class="form-control select2" type="color" id="couleur_produit_${detailsCount}" name="couleur_produit_${detailsCount}[]" multiple required placeholder="">
-                </div>
-                <div class="col-4">
-                    <label class="label" for="taille_produit_${detailsCount}">Tailles: <span class="required">*</span></label>
-                    <input class="form-control select2" type="text" id="taille_produit_${detailsCount}" name="taille_produit_${detailsCount}[]" multiple required placeholder="">
-                </div>
-                <div class="col-3">
-                    <label class="label" for="quantite_produit_${detailsCount}">Quantité: <span class="required">*</span></label>
-                    <input class="form-control" type="number" id="quantite_produit_${detailsCount}" name="quantite_produit_${detailsCount}" required>
-                </div>
-                <div class="align-content-end col-1">
-                    <button type="button" class="btn btn-danger p-2" id="remove_details_${detailsCount}">-</button>
-                </div>
-            </div>
-        `;
-    $('#details_produit').append(newDetails);
-    detailsCount++;
-});
+
+// ======================================================
+// 4) UPDATE QUANTITY (connecté + passager DB)
+// ======================================================
+function updateQuantity(cartId, newQuantity) {
+  newQuantity = parseInt(newQuantity || 1, 10);
+  if (isNaN(newQuantity) || newQuantity < 1) return;
+
+  $.ajax({
+    url: 'ajaxfiles/cartQuery.php',
+    type: 'POST',
+    data: {
+      updateQty: true,
+      cart_id: cartId,
+      quantite: newQuantity,
+      csrf_token: window.CSRF_TOKEN || ''
+    },
+    dataType: 'json',
+    success: function (res) {
+      if (res.status === 'success') {
+        if (window.cartTable) window.cartTable.ajax.reload(null, false);
+        loadCartCount();
+        refreshCartSummary();
+      } else {
+        Swal.fire("Erreur", res.message || "Impossible de modifier la quantité", "error");
+      }
+    },
+    error: function () {
+      Swal.fire("Erreur", "Serveur injoignable", "error");
+    }
+  });
+}
+
+function incrementQuantity(cartId, currentQty) {
+  updateQuantity(cartId, parseInt(currentQty, 10) + 1);
+}
+
+function decrementQuantity(cartId, currentQty) {
+  currentQty = parseInt(currentQty, 10);
+  if (currentQty > 1) updateQuantity(cartId, currentQty - 1);
+}
+
+
+// ======================================================
+// 5) REMOVE ITEM (connecté + passager DB)
+// ======================================================
+function removeFromCart(cartId) {
+  Swal.fire({
+    title: "Supprimer ?",
+    text: "Ce produit sera retiré du panier.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Oui, supprimer",
+    cancelButtonText: "Annuler"
+  }).then((result) => {
+    if (!result.isConfirmed) return;
+
+    $.ajax({
+      url: 'ajaxfiles/cartQuery.php',
+      type: 'POST',
+      data: {
+        removeItem: true,
+        cart_id: cartId,
+        csrf_token: window.CSRF_TOKEN || ''
+      },
+      dataType: 'json',
+      success: function (res) {
+        if (res.status === 'success') {
+          Toastify({
+            text: "Produit supprimé ✅",
+            duration: 2000,
+            gravity: "top",
+            position: "right",
+            backgroundColor: "black",
+            close: true
+          }).showToast();
+
+          if (window.cartTable) window.cartTable.ajax.reload(null, false);
+          loadCartCount();
+          refreshCartSummary();
+        } else {
+          Swal.fire("Erreur", res.message || "Suppression impossible", "error");
+        }
+      },
+      error: function () {
+        Swal.fire("Erreur", "Serveur injoignable", "error");
+      }
+    });
+  });
+}
+
+
+// ======================================================
+// 6) MODAL AJOUT PANIER (depuis index.php / produit.php)
+//    => utilise ajax_add_to_cart.php (JSON)
+// ======================================================
+let CURRENT_PRODUCT = null;
 
 function openAddCartModal(product) {
-    
-    var prix = parseFloat(product.prix) || 0;
+  CURRENT_PRODUCT = product;
 
-    // 🖼️ Image
-    $('#modalProductImage').attr('src', product.image).attr('alt', product.nom);
+  const prix = parseFloat(product.prix) || 0;
+  $('#modalProductImage').attr('src', product.image || 'images/no-image.png').attr('alt', product.nom || '');
+  $('#modalProductName').text(product.nom || '');
+  $('#modalProductPrice').text(prix.toFixed(3));
 
-    // 🏷️ Nom et prix
-    $('#modalProductName').text(product.nom);
-    $('#modalProductPrice').text(prix.toFixed(3));
+  // Reset qty
+  $('#quantity').val(1);
 
-    // 🎨 Couleurs
-    var $colorsContainer = $('#modalProductColors');
-    $colorsContainer.empty();
+  // stocke productId dans bouton
+  $('#modalAddCartBtn').data('productId', product.id);
 
-    if (Array.isArray(product.couleurs) && product.couleurs.length > 0) {
-        product.couleurs.forEach((c, idx) => {
-            // Chercher quantité disponible pour cette couleur
-            var hasQty = product.details.some(d => d.couleur === c && parseInt(d.quantite) > 0);
+  // render colors
+  const $colors = $('#modalProductColors').empty();
+  const $sizes = $('#modalProductSizes').empty();
 
-            var colorDiv = $('<div>')
-                .addClass('color-circle me-2 mb-2')
-                .css({
-                    width: '30px',
-                    height: '30px',
-                    'border-radius': '50%',
-                    'background-color': c,
-                    cursor: 'pointer',
-                    border: idx === 0 ? '2px solid black' : '1px solid #ccc',
-                    opacity: hasQty ? 1 : 0.4,
-                    position: 'relative'
-                })
-                .attr('data-color', c);
+  if (!Array.isArray(product.details)) product.details = [];
 
-            if (!hasQty) {
-                colorDiv.append('<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:red;opacity:0.6;border-radius:50%;"></div>');
-            }
+  // extraire couleurs uniques
+  const colors = [...new Set(product.details.map(d => d.couleur))].filter(Boolean);
 
-            $colorsContainer.append(colorDiv);
-        });
-    }
+  colors.forEach((c, idx) => {
+    const totalColorStock = product.details
+      .filter(d => d.couleur === c)
+      .reduce((sum, d) => sum + parseInt(d.quantite || 0, 10), 0);
 
-    // 🔄 Sélectionner première couleur par défaut
-    var firstColor = product.couleurs[0];
-    updateSizes(firstColor, product);
+    const disabled = totalColorStock <= 0;
 
-    // Gestion clic couleur
-    $colorsContainer.off('click').on('click', '.color-circle', function() {
-        var selectedColor = $(this).data('color');
+    const $c = $('<div>')
+      .addClass('color-circle me-2 mb-2')
+      .attr('data-color', c)
+      .css({
+        width: '30px',
+        height: '30px',
+        borderRadius: '50%',
+        backgroundColor: c,
+        border: '1px solid #ccc',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.35 : 1,
+        position: 'relative'
+      });
 
-        // Mettre en surbrillance
-        $colorsContainer.find('.color-circle').css('border', '1px solid #ccc');
-        $(this).css('border', '2px solid black');
+    if (!disabled && idx === 0) $c.addClass('selected').css('border', '2px solid black');
+    if (disabled) $c.append('<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#dc3545;font-weight:900;">×</span>');
 
-        // Mettre à jour les tailles
-        updateSizes(selectedColor, product);
-    });
+    $colors.append($c);
+  });
 
-    // 🔢 Quantité
-    //$('#modalProductQty').val(1);
+  // première couleur sélectionnée => tailles
+  const firstColor = $colors.find('.color-circle.selected').data('color');
+  if (firstColor) updateSizes(firstColor, product);
 
-    // 💾 Stocker infos pour bouton
-    $('#modalAddCartBtn')
-        .data('productId', product.id)
-        .data('price', prix);
+  // click color
+  $colors.off('click').on('click', '.color-circle', function () {
+    if ($(this).css('cursor') === 'not-allowed') return;
 
-    // 🪟 Ouvrir modal
-    var modalInstance = new bootstrap.Modal(document.getElementById('addCartModal'));
-    modalInstance.show();
+    $colors.find('.color-circle').removeClass('selected').css('border', '1px solid #ccc');
+    $(this).addClass('selected').css('border', '2px solid black');
+
+    updateSizes($(this).data('color'), product);
+  });
+
+  // open modal
+  const modalInstance = new bootstrap.Modal(document.getElementById('addCartModal'));
+  modalInstance.show();
 }
 
-// Fonction pour mettre à jour les tailles selon couleur
 function updateSizes(selectedColor, product) {
-    var $sizesContainer = $('#modalProductSizes');
-    $sizesContainer.empty();
+  const $sizes = $('#modalProductSizes').empty();
 
-    var sizes = product.details
-        .filter(d => d.couleur === selectedColor)
-        .map(d => ({ taille: d.taille, quantite: parseInt(d.quantite) }));
+  const sizes = product.details
+    .filter(d => d.couleur === selectedColor)
+    .map(d => ({ taille: d.taille, quantite: parseInt(d.quantite || 0, 10) }));
 
-    if (sizes.length > 0) {
-        sizes.forEach(s => {
-            var sizeDiv = $('<div>')
-                .addClass('size-square')
-                .text(s.taille.toUpperCase())
-                .attr('data-size', s.taille);
+  sizes.forEach((s, idx) => {
+    const disabled = s.quantite <= 0;
 
-            if (s.quantite <= 0) {
-                sizeDiv.addClass('out-of-stock');
-            }
+    const $s = $('<div>')
+      .addClass('size-square me-2 mb-2')
+      .attr('data-size', s.taille)
+      .text((s.taille || '').toUpperCase() + (disabled ? " (0)" : ""))
+      .css({
+        padding: '6px 12px',
+        border: '1px solid #ccc',
+        borderRadius: '8px',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.4 : 1,
+        userSelect: 'none'
+      });
 
-            $sizesContainer.append(sizeDiv);
-        });
+    if (!disabled && idx === 0) $s.addClass('selected').css({ background: '#111', color: '#fff', borderColor: '#111' });
 
-        // Sélectionner par défaut le premier en stock
-        var firstAvailable = $sizesContainer.find('.size-square').not('.out-of-stock').first();
-        firstAvailable.addClass('selected');
-    } else {
-        $sizesContainer.append('<div class="size-square disabled">-</div>');
-    }
+    $sizes.append($s);
+  });
 
-    // Gestion clic sur les tailles
-    $sizesContainer.off('click').on('click', '.size-square', function() {
-        if ($(this).hasClass('out-of-stock')) return; // ignorer si rupture
-        $sizesContainer.find('.size-square').removeClass('selected');
-        $(this).addClass('selected');
+  // click size
+  $sizes.off('click').on('click', '.size-square', function () {
+    if ($(this).css('cursor') === 'not-allowed') return;
+
+    $sizes.find('.size-square').removeClass('selected').css({ background: '', color: '', borderColor: '#ccc' });
+    $(this).addClass('selected').css({ background: '#111', color: '#fff', borderColor: '#111' });
+  });
+}
+
+
+// ======================================================
+// 7) SUBMIT ADD CART (JSON -> ajax_add_to_cart.php)
+// ======================================================
+$('#modalAddCartBtn').off('click').on('click', function () {
+  const productId = $(this).data('productId');
+  const qty = parseInt($('#quantity').val(), 10) || 1;
+
+  const color = $('#modalProductColors .color-circle.selected').data('color') || null;
+  const size = $('#modalProductSizes .size-square.selected').data('size') || null;
+
+  if (!productId || !color || !size) {
+    Swal.fire("Attention", "Veuillez choisir couleur + taille", "warning");
+    return;
+  }
+
+  fetch('ajax_add_to_cart.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      csrf_token: window.CSRF_TOKEN || '',
+      product_id: productId,
+      color: color,
+      size: size,
+      qty: qty
+    })
+  })
+    .then(r => r.json())
+    .then(res => {
+      if (res.success) {
+        updateCartUI(res.cart_count);
+
+        Toastify({
+          text: "Ajouté au panier ✅",
+          duration: 2000,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "black",
+          close: true
+        }).showToast();
+
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addCartModal'));
+        modal?.hide();
+
+        // si on est sur panier.php -> refresh table
+        if (window.cartTable) window.cartTable.ajax.reload(null, false);
+        refreshCartSummary();
+
+      } else {
+        Swal.fire("Erreur", res.message || "Ajout impossible", "error");
+      }
+    })
+    .catch(() => Swal.fire("Erreur", "Serveur injoignable", "error"));
+});
+
+
+// ======================================================
+// 8) qty controls modal
+// ======================================================
+function increaseQty() {
+  const qty = document.getElementById('quantity');
+  qty.value = parseInt(qty.value || "1", 10) + 1;
+}
+function decreaseQty() {
+  const qty = document.getElementById('quantity');
+  const v = parseInt(qty.value || "1", 10);
+  if (v > 1) qty.value = v - 1;
+}
+
+
+
+function buildDetailsFrom(containerSelector){
+    const details = [];
+    $(containerSelector).find('.detail-row').each(function(){
+      const color = $(this).find('input[type="color"]').val();
+      const size  = $(this).find('input[type="text"]').val();
+      const qty   = parseInt($(this).find('input[type="number"]').val() || "0", 10);
+      if (color && size) {
+        details.push({ couleur: color, taille: size, quantite: isNaN(qty)?0:qty });
+      }
     });
-}
+    return details;
+  }
 
+  function enableRemoveButtons(containerSelector){
+    const rows = $(containerSelector).find('.detail-row');
+    rows.find('.btn-remove-detail').hide();
+    if (rows.length > 1) rows.find('.btn-remove-detail').show();
+  }
+  function previewImages(input, previewSelector){
+    const preview = $(previewSelector);
+    preview.html('');
+    const files = input.files || [];
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const img = $('<img>').attr('src', e.target.result);
+        preview.append(img);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+  window.ajouter_produit = function(){
+    $.ajax({
+      url: 'ajaxfiles/productQuery.php',
+      type: 'POST',
+      data: { ajouterModalProduit: true },
+      success: function(html){
+        $('#update').html(html);
 
+        // init remove buttons
+        enableRemoveButtons('#details_produit_add');
 
+        // show modal (Bootstrap 5)
+        const modalEl = document.getElementById('ajouterProduitModal');
+        if (modalEl) bootstrap.Modal.getOrCreateInstance(modalEl).show();
+      }
+    });
+  };
+  window.modifierProduit = function(id){
+    $.ajax({
+      url: 'ajaxfiles/productQuery.php',
+      type: 'POST',
+      data: { modifierModalProduit: true, id: id },
+      success: function(html){
+        $('#update').html(html);
 
+        enableRemoveButtons('#details_produit_edit');
 
+        const modalEl = document.getElementById('modifierProduitModal');
+        if (modalEl) bootstrap.Modal.getOrCreateInstance(modalEl).show();
+      }
+    });
+  };
+  window.supprimerProduit = function(id){
+    Swal.fire({
+      title: "Supprimer ?",
+      text: "Cette action est irréversible.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Oui, supprimer",
+      cancelButtonText: "Annuler"
+    }).then(async (r) => {
+      if(!r.isConfirmed) return;
 
+      const res = await fetch("ajaxfiles/productQuery.php", {
+        method: "POST",
+        headers: {"Content-Type":"application/x-www-form-urlencoded"},
+        body: new URLSearchParams({ supprimerProduit: 1, id: id })
+      });
+      const data = await res.json();
 
+      if (data.status === "success") {
+        Swal.fire("OK", data.message, "success");
+        $('#myTableProducts').DataTable().ajax.reload(null,false);
+      } else {
+        Swal.fire("Erreur", data.message || "Erreur suppression", "error");
+      }
+    });
+  };
+$(document).on('change', '#image_produit_add', function(){
+    previewImages(this, '#preview_add');
+  });
 
+  $(document).on('click', '#add_details_product_add', function(){
+    const row = `
+      <div class="row g-2 align-items-end detail-row mt-2">
+        <div class="col-md-4">
+          <label class="form-label">Couleur</label>
+          <input class="form-control" type="color" value="#000000" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Taille</label>
+          <input class="form-control" type="text" placeholder="S, M, L..." required>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Quantité</label>
+          <input class="form-control" type="number" min="0" value="1" required>
+        </div>
+        <div class="col-md-1 text-end">
+          <button type="button" class="btn btn-danger btn-sm btn-remove-detail">-</button>
+        </div>
+      </div>
+    `;
+    $('#details_produit_add').append(row);
+    enableRemoveButtons('#details_produit_add');
+  });
 
-$('#modalAddCartBtn').on('click', function () {
-    const productId = $(this).data('productId');
-    const price = $(this).data('price');
-    const color = $('#modalProductColor').val();
-    const size = $('#modalProductSize').val();
-    const qty = parseInt($('#quantity').val()) || 1;
+  $(document).on('click', '#details_produit_add .btn-remove-detail', function(){
+    $(this).closest('.detail-row').remove();
+    enableRemoveButtons('#details_produit_add');
+  });
 
-    addCart(productId, price, color, size, qty);
+  $(document).on('submit', '#AjouterProduit', function(e){
+    e.preventDefault();
 
-    // Ferme le modal après ajout
-    const modal = bootstrap.Modal.getInstance(document.getElementById('addCartModal'));
-    modal.hide();
-});
+    const details = buildDetailsFrom('#details_produit_add');
+    const fd = new FormData(this);
+    fd.append('ajouterProduit', 1);
+    fd.append('details_produit', JSON.stringify(details));
 
-
-
-function addCart(productId, price, color = null, size = null, qty = 1) {
-    const userId = window.userId || null; // Passée depuis PHP si connecté
-
-    if (userId) {
-        // UTILISATEUR CONNECTÉ → envoi au serveur
-        $.post('ajaxfiles/cartQuery.php', {
-            ajouterPanier: true,
-            id: productId,
-            prix: price,
-            couleur: color,
-            taille: size,
-            quantite: qty
-        }, function (res) {
-            if (res.status === 'success') {
-                updateCartUI(res.cart_count); // MAJ du badge
-                showToast(res.message, 'black');
-            } else if (res.status === 'exists') {
-                showToast('Produit déjà dans le panier', 'orange');
-            } else {
-                showToast(res.message || 'Erreur', 'red');
-            }
-        }, 'json');
-    } else {
-        // CLIENT PASSAGER → stockage local
-        let cart = JSON.parse(localStorage.getItem('cart')) || [];
-
-        let found = cart.find(p => p.id == productId && p.couleur == color && p.taille == size);
-        if (found) {
-            // Produit déjà présent → ne rien incrémenter
-            showToast('Produit déjà dans le panier', 'orange');
-        } else {
-            cart.push({
-                id: productId,
-                prix: price,
-                couleur: color,
-                taille: size,
-                quantite: 1
-            });
-            localStorage.setItem('cart', JSON.stringify(cart));
-
-            // Met à jour le badge avec le nombre de produits différents
-            const totalItems = cart.length;
-            updateCartUI(totalItems);
-
-            showToast('Produit ajouté au panier !', 'black');
-        }
-    }
-}
-
-
-
-// --- MAJ du badge panier ---
-function updateCartUI(count) {
-    const badge = document.querySelector('.cart-count');
-    if (!badge) return;
-
-    if (count > 0) {
-        badge.textContent = count;
-        badge.style.display = 'inline-block';
-    } else {
-        badge.textContent = '0';
-        badge.style.display = 'none';
-    }
-}
-
-// --- Charger le panier au démarrage (pour garder cohérence) ---
-document.addEventListener('DOMContentLoaded', () => {
-    const userId = window.userId || null;
-
-    if (userId) {
-        // Si connecté → récupérer depuis le serveur
-        $.get('ajaxfiles/cartQuery.php', { getCartCount: true }, function (res) {
-            if (res.status === 'success') {
-                // Ici on suppose que le serveur renvoie déjà le nombre de produits différents
-                updateCartUI(res.cart_count);
-            }
-        }, 'json');
-    } else {
-        // Sinon depuis localStorage
-        let cart = JSON.parse(localStorage.getItem('cart')) || [];
-        // Nombre de produits différents
-        const totalItems = cart.length;
-        updateCartUI(totalItems);
-    }
-});
-
-
-
-// Toast simple
-function showToast(message, bgColor = 'black') {
-    Toastify({
-        text: message,
-        duration: 3000,
-        gravity: "top",
-        position: "right",
-        backgroundColor: bgColor,
-        close: true
-    }).showToast();
-}
-
-
-
-function updateQuantity(productId, newQuantity) {
-    if (newQuantity < 1) {
-        return;
-    }
+    $('#btnSubmitAddProduct').prop('disabled', true);
 
     $.ajax({
-        url: 'ajaxfiles/cartQuery.php',
-        type: 'POST',
-        data: { modifierQuantite: true, id_produit: productId, quantite: newQuantity },
-        dataType: 'JSON',
-        success: function (response) {
-            if (response.status === "success") {
-                $('#myTablePanier').DataTable().ajax.reload();
-                /* $("#quantite-" + productId).text(newQuantity);
-                
-                let prix = parseFloat($("#prix-" + productId).text().replace(" DT", ""));
-                $("#total-" + productId).text((newQuantity * prix).toFixed(2) + " DT"); */
-            } else {
-                Swal.fire("Erreur", response.message, "error");
-            }
-        },
-        error: function () {
-            Swal.fire("Erreur", "Impossible de mettre à jour la quantité.", "error");
+      url: 'ajaxfiles/productQuery.php',
+      type: 'POST',
+      data: fd,
+      contentType: false,
+      processData: false,
+      success: function(res){
+        let r = null;
+        try { r = (typeof res === "string") ? JSON.parse(res) : res; } catch(e){}
+
+        if (r && r.status === 'success') {
+          const modalEl = document.getElementById('ajouterProduitModal');
+          if (modalEl) bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+
+          Swal.fire("Succès", r.message, "success");
+          $('#myTableProducts').DataTable().ajax.reload(null,false);
+        } else {
+          Swal.fire("Erreur", r?.message || "Erreur ajout", "error");
         }
+      },
+      error: function(){
+        Swal.fire("Erreur", "Erreur serveur", "error");
+      },
+      complete: function(){
+        $('#btnSubmitAddProduct').prop('disabled', false);
+      }
     });
+  });
+
+  // -----------------------------
+  // Delegated events: Edit modal
+  // -----------------------------
+  $(document).on('change', '#image_produit_edit', function(){
+    previewImages(this, '#preview_edit');
+  });
+
+  $(document).on('click', '#add_details_product_edit', function(){
+    const row = `
+      <div class="row g-2 align-items-end detail-row mt-2">
+        <div class="col-md-4">
+          <label class="form-label">Couleur</label>
+          <input class="form-control" type="color" value="#000000" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Taille</label>
+          <input class="form-control" type="text" placeholder="S, M, L..." required>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Quantité</label>
+          <input class="form-control" type="number" min="0" value="1" required>
+        </div>
+        <div class="col-md-1 text-end">
+          <button type="button" class="btn btn-danger btn-sm btn-remove-detail">-</button>
+        </div>
+      </div>
+    `;
+    $('#details_produit_edit').append(row);
+    enableRemoveButtons('#details_produit_edit');
+  });
+
+  $(document).on('click', '#details_produit_edit .btn-remove-detail', function(){
+    $(this).closest('.detail-row').remove();
+    enableRemoveButtons('#details_produit_edit');
+  });
+  $(document).on('submit', '#ModifierProduit', function(e){
+    e.preventDefault();
+
+    const details = buildDetailsFrom('#details_produit_edit');
+    const fd = new FormData(this);
+    fd.append('modifierProduit', 1);
+    fd.append('details_produit', JSON.stringify(details));
+
+    $('#btnSubmitEditProduct').prop('disabled', true);
+
+    $.ajax({
+      url: 'ajaxfiles/productQuery.php',
+      type: 'POST',
+      data: fd,
+      contentType: false,
+      processData: false,
+      success: function(res){
+        let r = null;
+        try { r = (typeof res === "string") ? JSON.parse(res) : res; } catch(e){}
+
+        if (r && r.status === 'success') {
+          const modalEl = document.getElementById('modifierProduitModal');
+          if (modalEl) bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+
+          Swal.fire("Succès", r.message, "success");
+          $('#myTableProducts').DataTable().ajax.reload(null,false);
+        } else {
+          Swal.fire("Erreur", r?.message || "Erreur modification", "error");
+        }
+      },
+      error: function(){
+        Swal.fire("Erreur", "Erreur serveur", "error");
+      },
+      complete: function(){
+        $('#btnSubmitEditProduct').prop('disabled', false);
+      }
+    });
+  });
+
+/* function ajouter_produit() { 
+  $.ajax({ 
+    url: 'ajaxfiles/productQuery.php', 
+    type: 'POST', 
+    data: { ajouterModalProduit: true }, 
+    success: function (data) { 
+      $('#update').html(data); 
+      $('#ajouterProduitModal').modal('show'); 
+    }, 
+    error: function (xhr, status, error) { 
+      console.error("Erreur AJAX:", error); 
+    } 
+  }); 
 }
 
-function incrementQuantity(productId) {
-    let currentQuantity = parseInt($("#quantite-" + productId).text());
-    updateQuantity(productId, currentQuantity + 1);
+function modifierProduit(id) { 
+  $.ajax({ 
+    url: 'ajaxfiles/productQuery.php', 
+    type: 'POST', 
+    data: { 
+      modifierModalProduit: true, 
+      id: id 
+    }, 
+    success: function (data) { 
+      $('#update').html(data); 
+      $('#modifierProduitModal').modal('show'); 
+    }, 
+    error: function (xhr, status, error) { 
+      console.error("Erreur AJAX:", error); 
+    } 
+  }); 
 }
-
-function decrementQuantity(productId) {
-    let currentQuantity = parseInt($("#quantite-" + productId).text());
-    if (currentQuantity > 1) {
-        updateQuantity(productId, currentQuantity - 1);
-    }
-}
-
-
-
-// Quantité
-function increaseQty() {
-    let qty = document.getElementById('quantity');
-    qty.value = parseInt(qty.value) + 1;
-}
-
-function decreaseQty() {
-    let qty = document.getElementById('quantity');
-    if (parseInt(qty.value) > 1) qty.value = parseInt(qty.value) - 1;
-}
+ */
+/* $(document).on('submit', '#AjouterProduit', function (event) { 
+  event.preventDefault(); 
+  var formData = new FormData(this); 
+  var productDetails = []; 
+  // Collecte des détails 
+   $('[id^=detail_]').each(function (i, item) { 
+    var couleur = $(#couleur_produit_${i}).val(); 
+    var taille = $(#taille_produit_${i}).val(); 
+    var quantite = $(#quantite_produit_${i}).val(); 
+    productDetails.push({ couleur: couleur, taille: taille, quantite: quantite }); 
+  }); 
+  formData.append('details_produit', JSON.stringify(productDetails)); 
+  formData.append('ajouterProduit', true); 
+  $.ajax({ 
+    url: 'ajaxfiles/productQuery.php', 
+    type: 'POST', 
+    data: formData, processData: false, 
+    contentType: false, dataType: 'JSON', 
+    success: function (data) { 
+      Swal.fire({ 
+        icon: data.status === 'success' ? 'success' : 'error', 
+        title: data.status === 'success' ? 'Produit ajouté ✅' : 'Erreur ❌', 
+        text: data.message, 
+        confirmButtonText: 'OK' 
+      }).then(() => { 
+        if (data.status === 'success') { 
+          $('#ajouterProduitModal').modal('hide'); 
+          $('.modal-backdrop').remove(); 
+          $('#AjouterProduit')[0].reset(); 
+          $('#preview').html(''); } }); 
+          $('#myTableProducts').DataTable().ajax.reload(null, false); 
+        }, error: function (xhr, status, error) { 
+          console.error('Erreur AJAX:', error); 
+          Swal.fire(
+            'Erreur serveur', 
+            'Impossible de contacter le serveur.', 
+            'error'); 
+          } 
+        }); 
+      }); */
