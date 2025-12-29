@@ -5,43 +5,54 @@ include 'connection.php';
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $login = trim($_POST['email'] ?? '');
+    $login = trim($_POST['email'] ?? '');     // ici c'est login/email
     $password = trim($_POST['password'] ?? '');
 
-    if (empty($login) || empty($password)) {
+    if ($login === '' || $password === '') {
         $error = "Veuillez remplir tous les champs.";
     } else {
-        // Vérifier le login dans la table utilisateur
-        $stmt = $con->prepare("SELECT id, nom, prenom, email, login, password, statut FROM utilisateur WHERE email = ? LIMIT 1");
-        $stmt->bind_param("s", $login);
+
+        // ✅ chercher par email OU login
+        $stmt = $con->prepare("SELECT id, nom, prenom, email, login, password, statut 
+                               FROM utilisateur 
+                               WHERE email = ? OR login = ?
+                               LIMIT 1");
+        $stmt->bind_param("ss", $login, $login);
         $stmt->execute();
         $result = $stmt->get_result();
 
         if ($result && $result->num_rows === 1) {
             $user = $result->fetch_assoc();
+
             if (password_verify($password, $user['password'])) {
-                // Connexion réussie → session
-                $_SESSION['user_id'] = $user['id'];
+
+                $_SESSION['user_id'] = (int)$user['id'];
                 $_SESSION['user_name'] = $user['nom'];
                 $_SESSION['user_login'] = $user['login'];
                 $_SESSION['user_email'] = $user['email'];
                 $_SESSION['user_statut'] = $user['statut'];
 
-                // Panier hybride : synchroniser si localStorage envoyé
+                // ✅ Synchroniser le panier localStorage -> DB
                 if (!empty($_POST['cart'])) {
                     $cartItems = json_decode($_POST['cart'], true);
+
                     if (is_array($cartItems)) {
                         foreach ($cartItems as $item) {
-                            $productId = intval($item['id']);
-                            $color = $item['couleur'] ?? null;
-                            $size = $item['taille'] ?? null;
-                            $qty = intval($item['quantite'] ?? 1);							
+                            $productId = (int)($item['id'] ?? 0);
+                            $color = trim((string)($item['couleur'] ?? ''));
+                            $size  = trim((string)($item['taille'] ?? ''));
+                            $qty   = (int)($item['quantite'] ?? 1);
 
+                            if ($productId <= 0 || $color === '' || $size === '' || $qty <= 0) continue;
 
-                            $stmt2 = $con->prepare("INSERT INTO panier (id_produit, quantite, id_user, couleur, taille)
+                            // ✅ nécessite UNIQUE(id_user,id_produit,couleur,taille)
+                            $stmt2 = $con->prepare("
+                                INSERT INTO panier (id_produit, quantite, id_user, couleur, taille)
                                 VALUES (?, ?, ?, ?, ?)
-                                ON DUPLICATE KEY UPDATE quantite = quantite + ?");
-                            $stmt2->bind_param("isssii",$productId,$qty, $user['id'],  $color, $size,  $qty);
+                                ON DUPLICATE KEY UPDATE quantite = quantite + VALUES(quantite)
+                            ");
+                            $uid = (int)$user['id'];
+                            $stmt2->bind_param("iiiss", $productId, $qty, $uid, $color, $size);
                             $stmt2->execute();
                         }
                     }
@@ -49,6 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 header('Location: index.php');
                 exit;
+
             } else {
                 $error = "Mot de passe incorrect.";
             }
@@ -58,6 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
+
 <!doctype html>
 <html lang="fr">
 <head>

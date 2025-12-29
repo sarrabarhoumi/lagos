@@ -16,10 +16,15 @@ if (file_exists($envFile)) {
 
 
 
-$host = getenv('DB_HOST') ?: 'db';
-$user = getenv('DB_USER') ?: 'lagos';
-$password = getenv('DB_PASS') ?: 'W3a9ClHrgC[krsrd';
-$dbname = getenv('DB_NAME') ?: 'lagos';
+ $host = getenv('DB_HOST') ?: 'localhost';
+$user = getenv('DB_USER') ?: 'root';
+$password = getenv('DB_PASS') ?: '';
+$dbname = getenv('DB_NAME') ?: 'lagos'; 
+
+/* $host = 'sql109.infinityfree.com';
+$user =  'if0_40781469';
+$password =  'Sarra12880982';
+$dbname = 'if0_40781469_lagos'; */
 
 $con = mysqli_connect($host, $user, $password, $dbname);
 

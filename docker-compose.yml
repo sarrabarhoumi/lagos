@@ -27,7 +27,7 @@ services:
     image: jenkins/jenkins:lts
     container_name: jenkins
     ports:
-      - "8081:8080"   # 8081 sur ton PC → 8080 dans le conteneur Jenkins
+      - "8081:8080"   
     volumes:
       - jenkins_home:/var/jenkins_home
     networks:
